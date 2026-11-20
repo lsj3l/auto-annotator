@@ -4,67 +4,351 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Auto Annotator turns PDF readings into highlights and handwritten margin notes. An independent project by John Saleh.">
-  <meta name="theme-color" content="#f7f8f2">
+  <meta name="theme-color" content="#f8f7f2">
   <title>Auto Annotator — Read between the lines.</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/app.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#annotate">Skip to annotator</a>
+
+  <!-- Navigation Bar -->
   <header class="site-header wrap">
-    <a class="brand" href="/" aria-label="Auto Annotator home"><span class="brand-mark" aria-hidden="true">a<span>↗</span></span><span>Auto Annotator<small>A READING TOOL BY JOHN SALEH</small></span></a>
-    <nav aria-label="Main navigation"><a href="#how-it-works">How it works</a><a href="https://github.com/lsj3l/auto-annotator" target="_blank" rel="noopener noreferrer">View source <span aria-hidden="true">↗</span></a></nav>
+    <a class="brand" href="/" aria-label="Auto Annotator home">
+      <span class="brand-mark" aria-hidden="true">a</span>
+      <div class="brand-text">
+        <span class="brand-title">Auto Annotator</span>
+        <span class="brand-subtitle">READING & MARGIN NOTES · BY JOHN SALEH</span>
+      </div>
+    </a>
+    <nav aria-label="Main navigation">
+      <a href="#how-it-works">How it works</a>
+      <a href="https://github.com/lsj3l/auto-annotator" target="_blank" rel="noopener noreferrer" class="nav-source">
+        <span>GitHub</span>
+        <span class="arrow-icon" aria-hidden="true">↗</span>
+      </a>
+    </nav>
   </header>
+
   <main>
+    <!-- Hero Section -->
     <section class="hero wrap" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="eyebrow"><span class="tiny-line"></span> LESS HIGHLIGHTING. MORE UNDERSTANDING.</p>
+        <div class="hero-eyebrow">
+          <span class="eyebrow-dot"></span>
+          <span>INTENTIONAL READING & ANNOTATION</span>
+        </div>
         <h1 id="hero-title">Read between<br>the <em>lines.</em></h1>
-        <p class="hero-description">Give your reading a little room for thought. Turn a PDF into thoughtful highlights and handwritten margin notes, ready to read, reflect on, and print.</p>
-        <div class="hero-tags"><span>AI-selected highlights</span><span>Neural handwriting</span><span>Print-ready PDFs</span></div>
-        <a class="text-link" href="#annotate">Start with a reading <span aria-hidden="true">↓</span></a>
+        <p class="hero-description">
+          Give your readings room to breathe. Upload any academic paper, article, or book excerpt to generate thoughtful passage highlights and genuine handwritten margin notes — formatted as a print-ready PDF.
+        </p>
+        <div class="hero-tags">
+          <span class="tag-pill">AI-Guided Highlights</span>
+          <span class="tag-pill">Neural Ink Handwriting</span>
+          <span class="tag-pill">Print-Ready 8.5×11″</span>
+          <span class="tag-pill">Up to 100 Pages</span>
+        </div>
+        <div class="hero-cta-group">
+          <a class="button hero-cta" href="#annotate">
+            <span>Start with a reading</span>
+            <span aria-hidden="true">↓</span>
+          </a>
+          <button type="button" class="button secondary hero-sample-cta" onclick="document.getElementById('demo-button').click()">
+            <span>Explore sample reading</span>
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
       </div>
-      <div class="paper-scene" aria-label="Illustrative preview of an annotated reading">
-        <span class="paper-label">A LITTLE CONTEXT IN THE MARGINS</span>
+
+      <!-- Live Mockup of an Annotated Document -->
+      <div class="paper-scene" aria-label="Preview of an annotated reading">
+        <div class="paper-stack-underlay" aria-hidden="true"></div>
         <div class="paper">
-          <div class="paper-meta"><span>THE READING ROOM</span><span>01</span></div>
-          <h2>On the art of<br>paying attention</h2>
+          <div class="paper-header">
+            <span class="paper-meta-label">THE READING ROOM</span>
+            <span class="paper-meta-page">PAGE 01</span>
+          </div>
+          <h2 class="paper-title">On the art of<br>paying attention</h2>
           <div class="paper-rule"></div>
-          <div class="paper-columns"><div class="paper-prose"><p>Reading is more than moving through a page. It is a conversation between what we already know and what we are beginning to notice.</p><p><mark>A good question can be more useful than a page full of highlights.</mark> The margin gives that question somewhere to live.</p><p>When we return to a difficult passage, a small note can help us find the thread again. <mark class="pink">Understanding takes a second look.</mark></p></div><div class="margin-note">What does<br>this change?<span class="note-arrow" aria-hidden="true">↙</span><span class="second-note">Come back<br>to this idea.</span></div></div>
-          <div class="paper-footer">ILLUSTRATIVE PREVIEW · NOT AN AI RESULT</div>
+          <div class="paper-columns">
+            <div class="paper-prose">
+              <p>
+                Reading is more than moving through words on a page. It is an active conversation between what we know and what we are beginning to notice.
+              </p>
+              <p>
+                <mark class="highlight-yellow">A good question in the margin is often more valuable than a page full of passive highlights.</mark>
+                The margin gives that thought somewhere permanent to live.
+              </p>
+              <p>
+                When we return to a challenging passage, a small marginal note helps us recover the thread of argument.
+                <mark class="highlight-pink">Real understanding requires a second look.</mark>
+              </p>
+            </div>
+            <div class="margin-notes-column">
+              <div class="handwritten-note note-1">
+                what does this claim change?
+                <span class="note-pointer" aria-hidden="true">↙</span>
+              </div>
+              <div class="handwritten-note note-2">
+                come back to this evidence
+              </div>
+            </div>
+          </div>
+          <div class="paper-footer">
+            <span>PREVIEW · NEURAL PEN-STROKE MARGIN LAYOUT</span>
+          </div>
         </div>
-        <div class="paper-stamp"><span aria-hidden="true">✦</span> Your PDF. A fresh perspective.</div>
+        <div class="paper-badge">
+          <span class="badge-star" aria-hidden="true">✦</span>
+          <span>Your PDF, with room for thought.</span>
+        </div>
       </div>
     </section>
+
+    <!-- Workspace Tool Section -->
     <section class="workspace wrap" id="annotate" aria-labelledby="workspace-title">
-      <div class="section-heading"><div><p class="eyebrow">YOUR NEXT READING</p><h2 id="workspace-title">Make room for a note.</h2></div><span class="small-badge" id="runtime-badge">Checking availability…</span></div>
+      <div class="workspace-header">
+        <div>
+          <p class="section-eyebrow">WORKSPACE</p>
+          <h2 id="workspace-title">Annotate your reading</h2>
+        </div>
+        <span class="small-badge" id="runtime-badge">Checking availability…</span>
+      </div>
+
       <div class="workspace-grid">
-        <form id="annotation-form" class="form-card">
-          <div class="card-top"><span class="step-number">01</span><div><h3>Add your PDF</h3><p id="limit-text">Text-based readings · up to 100 pages · 100 MiB</p></div></div>
-          <div class="drop-zone" id="drop-zone"><input type="file" id="pdf-file" name="file" accept=".pdf,application/pdf" aria-describedby="file-guidance file-summary"><label for="pdf-file"><svg width="34" height="38" viewBox="0 0 34 38" fill="none" aria-hidden="true"><path d="M8 1h12l10 10v24a2 2 0 0 1-2 2H8a3 3 0 0 1-3-3V4a3 3 0 0 1 3-3Z" stroke="currentColor" stroke-width="1.5"/><path d="M20 1v11h10M11 21h12M11 27h9" stroke="currentColor" stroke-width="1.5"/></svg><strong>Drop a reading here</strong><span>or <u>choose a PDF</u></span></label><p id="file-guidance">A selectable-text PDF works best.</p><div id="file-summary" class="file-summary" hidden></div></div>
-          <div class="key-heading"><label for="api-key">Your Gemini API key</label><span>BRING YOUR OWN KEY</span></div>
-          <input type="password" id="api-key" name="api_key" placeholder="Paste your API key" autocomplete="off" spellcheck="false" aria-describedby="key-guidance">
-          <p class="field-help" id="key-guidance">Not saved in your browser. AI requests use your Google account’s quota and billing.</p>
-          <div id="local-options" class="local-options" hidden><label class="check-label"><input type="checkbox" id="full-local"> <span>Use full local processing <small>For longer readings or scans; Tesseract is required for OCR.</small></span></label><label class="check-label" id="regenerate-option" hidden><input type="checkbox" id="regenerate"> <span>Generate fresh annotations <small>Uses additional API quota instead of a compatible local cache.</small></span></label></div>
-          <button type="submit" class="button primary" id="annotate-button" disabled>Annotate my reading <span aria-hidden="true">↗</span></button>
-          <div class="sample-divider"><span>JUST LOOKING AROUND?</span></div>
-          <button type="button" class="button secondary" id="demo-button" disabled>Try a sample reading <span aria-hidden="true">→</span></button>
-          <p class="sample-help">No key needed. Preset notes, real PDF rendering.</p>
-          <p class="privacy-note"><svg width="14" height="16" viewBox="0 0 14 16" fill="none" aria-hidden="true"><rect x="1" y="6" width="12" height="9" rx="2" stroke="currentColor"/><path d="M4 6V4a3 3 0 0 1 6 0v2" stroke="currentColor"/></svg><span>Your PDF is processed by this app. In AI mode, extracted text is sent to Google. <a href="#data-details">Read the data details.</a></span></p>
+        <!-- Input Form Card -->
+        <form id="annotation-form" class="card form-card">
+          <div class="card-header">
+            <span class="card-step">01</span>
+            <div>
+              <h3 class="card-title">Add your PDF</h3>
+              <p class="card-subtitle" id="limit-text">Text-based readings · up to 100 pages · 100 MiB</p>
+            </div>
+          </div>
+
+          <!-- Drag and Drop Zone -->
+          <div class="drop-zone" id="drop-zone">
+            <input type="file" id="pdf-file" name="file" accept=".pdf,application/pdf" aria-describedby="file-guidance file-summary">
+            <label for="pdf-file" class="drop-label">
+              <div class="drop-icon-wrap" aria-hidden="true">
+                <svg width="32" height="36" viewBox="0 0 32 36" fill="none">
+                  <path d="M6 2h13l7 7v21a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M19 2v7h7M8 18h16M8 24h11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="drop-text-primary">
+                <strong>Drop your reading here</strong>
+                <span>or <u class="choose-link">browse files</u></span>
+              </div>
+            </label>
+            <p id="file-guidance" class="drop-guidance">Selectable-text PDFs work best. Multi-page readings welcome.</p>
+            <div id="file-summary" class="file-summary" hidden></div>
+          </div>
+
+          <!-- API Key Input -->
+          <div class="form-group">
+            <div class="key-heading">
+              <label for="api-key" class="field-label">Gemini API Key</label>
+              <span class="key-badge">BRING YOUR OWN KEY</span>
+            </div>
+            <div class="input-wrap">
+              <input type="password" id="api-key" name="api_key" placeholder="Paste your Google Gemini API key" autocomplete="off" spellcheck="false" aria-describedby="key-guidance" class="text-input">
+            </div>
+            <p class="field-help" id="key-guidance">
+              Keys are never saved in your browser or retained on the server. AI calls use your Google Gemini quota.
+            </p>
+          </div>
+
+          <!-- Optional Local Processing Details -->
+          <div id="local-options" class="local-options" hidden>
+            <label class="check-label">
+              <input type="checkbox" id="full-local">
+              <div>
+                <span class="check-title">Full local queue mode</span>
+                <small class="check-desc">Recommended for 50+ page local batch jobs or OCR on scanned documents.</small>
+              </div>
+            </label>
+            <label class="check-label" id="regenerate-option" hidden>
+              <input type="checkbox" id="regenerate">
+              <div>
+                <span class="check-title">Generate fresh annotations</span>
+                <small class="check-desc">Forces fresh Gemini analysis instead of reusing local cache.</small>
+              </div>
+            </label>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="button primary submit-btn" id="annotate-button" disabled>
+            <span>Annotate Reading</span>
+            <span class="btn-arrow" aria-hidden="true">↗</span>
+          </button>
+
+          <!-- Friction-Free Demo Option -->
+          <div class="sample-divider">
+            <span>OR TRY WITHOUT AN API KEY</span>
+          </div>
+
+          <button type="button" class="button secondary sample-btn" id="demo-button" disabled>
+            <span>Run Sample Reading Demo</span>
+            <span aria-hidden="true">→</span>
+          </button>
+          <p class="sample-help">Instant preview using preset academic notes. No key or account required.</p>
+
+          <div class="privacy-note">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <span>Documents are processed in memory and never retained. <a href="#data-details">Read data details.</a></span>
+          </div>
         </form>
-        <div class="output-card" id="output-card">
-          <div class="output-heading"><div class="card-top"><span class="step-number">02</span><div><h3>A new perspective</h3><p id="output-subtitle">Your annotated reading will appear here.</p></div></div><span id="result-type" class="small-badge" hidden></span></div>
-          <div class="status-box" id="status-box" role="status" aria-live="polite" hidden><span id="status-text"></span></div>
-          <div class="empty-state" id="empty-state"><div class="empty-sheets" aria-hidden="true"><span></span><span><i></i><i></i><i></i><b>an idea<br>worth keeping</b></span></div><h4>Keep the thought.<br>Find the thread.</h4><p>Highlights that point somewhere.<br>Notes that leave the original readable.</p><span class="empty-caption">ONE READING, A LITTLE CLEARER.</span></div>
-          <div class="processing-state" id="processing-state" hidden><span class="spinner" aria-hidden="true"></span><h4 id="processing-title">Making room for thought…</h4><p>PDF layout and handwriting can take a moment. Keep this page open.</p><progress id="progress" max="100" aria-label="Annotation progress"></progress></div>
-          <div id="pdf-result" hidden><div class="result-actions"><a class="button primary" id="download-link" download>Download annotated PDF <span aria-hidden="true">↓</span></a><a id="open-link" target="_blank" rel="noopener noreferrer">Open PDF ↗</a></div><img id="pdf-preview" alt="First page of your completed annotated PDF" hidden><p class="preview-note" id="preview-note">First-page preview. Download the PDF to see every page.</p></div>
+
+        <!-- Output Card -->
+        <div class="card output-card" id="output-card">
+          <div class="card-header">
+            <span class="card-step">02</span>
+            <div>
+              <h3 class="card-title">Annotated Output</h3>
+              <p class="card-subtitle" id="output-subtitle">Your annotated reading will appear here.</p>
+            </div>
+            <span id="result-type" class="small-badge badge-success" hidden></span>
+          </div>
+
+          <!-- Status / Error Notification Box -->
+          <div class="status-box" id="status-box" role="status" aria-live="polite" hidden>
+            <span id="status-text"></span>
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state" id="empty-state">
+            <div class="empty-illustration" aria-hidden="true">
+              <div class="empty-page-back"></div>
+              <div class="empty-page-front">
+                <div class="empty-line line-1"></div>
+                <div class="empty-line line-highlight"></div>
+                <div class="empty-line line-2"></div>
+                <span class="empty-handwriting">ready for notes</span>
+              </div>
+            </div>
+            <h4 class="empty-heading">Keep the thought.<br>Find the thread.</h4>
+            <p class="empty-description">
+              Upload a reading or explore the demo to see genuine neural handwriting and translucent highlights placed into print-ready margins.
+            </p>
+            <div class="empty-features">
+              <div class="feature-item">
+                <span class="feature-bullet" aria-hidden="true">✦</span>
+                <span>Exact verbatim quote anchoring</span>
+              </div>
+              <div class="feature-item">
+                <span class="feature-bullet" aria-hidden="true">✦</span>
+                <span>Ink-safe margin boundary detection</span>
+              </div>
+              <div class="feature-item">
+                <span class="feature-bullet" aria-hidden="true">✦</span>
+                <span>Built-in freeze retry & up to 100 pages</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Processing State -->
+          <div class="processing-state" id="processing-state" hidden>
+            <div class="spinner-wrap">
+              <span class="spinner" aria-hidden="true"></span>
+            </div>
+            <h4 id="processing-title" class="processing-heading">Analyzing your reading…</h4>
+            <p class="processing-sub">Gemini is finding key passages and Handwriter is generating neural pen strokes. Keep this page open.</p>
+            <div class="progress-wrap">
+              <progress id="progress" max="100" aria-label="Annotation progress"></progress>
+            </div>
+          </div>
+
+          <!-- Completed PDF Result -->
+          <div id="pdf-result" hidden>
+            <div class="result-actions">
+              <a class="button primary download-btn" id="download-link" download>
+                <span>Download Annotated PDF</span>
+                <span aria-hidden="true">↓</span>
+              </a>
+              <a class="button secondary open-btn" id="open-link" target="_blank" rel="noopener noreferrer">
+                <span>Open in Tab</span>
+                <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+            <div class="preview-container">
+              <img id="pdf-preview" alt="First page preview of your completed annotated PDF" hidden>
+            </div>
+            <p class="preview-note" id="preview-note">First-page preview. Download the PDF to view all pages.</p>
+          </div>
         </div>
       </div>
     </section>
-    <section class="how-section wrap" id="how-it-works" aria-labelledby="how-title"><div class="section-heading"><div><p class="eyebrow">FROM PAGE TO PERSPECTIVE</p><h2 id="how-title">A considered little workflow.</h2></div></div><div class="how-grid"><article><span>01 / READ</span><h3>Find the important part.</h3><p>The app extracts your text. Gemini proposes short highlights and margin notes anchored to the reading.</p></article><article><span>02 / MAKE SPACE</span><h3>Let the page breathe.</h3><p>Quote matching and margin layout help keep notes connected to the passage without covering the original.</p></article><article><span>03 / KEEP IT</span><h3>Take the thought with you.</h3><p>Neural pen strokes and translucent highlights become a downloadable, US Letter portrait PDF.</p></article></div></section>
-    <section class="data-section wrap" id="data-details" aria-labelledby="data-title"><h2 id="data-title">A note on your notes.</h2><p>The hosted app processes your document on its server. AI mode sends extracted reading text to Google’s Gemini API using the key you supply. The app does not intentionally retain hosted documents or keys, and it does not save your key in browser storage. Hosting and API providers have their own data and logging policies. Use readings you are allowed to process, and review AI-generated notes against the original.</p><p>The sample uses an original synthetic reading with preset annotations and makes no AI request. Scanned PDFs and longer documents require the separate local workflow. The handwriting engine is pretrained software from <a href="https://github.com/Eeman1113/handwriter" target="_blank" rel="noopener noreferrer">Handwriter</a>, not a model trained by this project.</p></section>
+
+    <!-- How It Works Section -->
+    <section class="how-section wrap" id="how-it-works" aria-labelledby="how-title">
+      <div class="section-heading-center">
+        <p class="section-eyebrow">THE WORKFLOW</p>
+        <h2 id="how-title" class="section-title">A considered reading process</h2>
+        <p class="section-description">How Auto Annotator transforms static readings into active margin conversations.</p>
+      </div>
+
+      <div class="how-grid">
+        <article class="how-card">
+          <div class="how-step-badge">STEP 01</div>
+          <h3 class="how-card-title">Extract & Analyze</h3>
+          <p class="how-card-text">
+            Text layers are mapped line-by-line. Gemini reads the prose to identify core arguments, counter-evidence, and key distinctions worth questioning.
+          </p>
+        </article>
+        <article class="how-card">
+          <div class="how-step-badge">STEP 02</div>
+          <h3 class="how-card-title">Make Room for Ink</h3>
+          <p class="how-card-text">
+            The layout engine measures existing margins and expands blank space when needed without covering your source text. Each note anchors to its exact source line.
+          </p>
+        </article>
+        <article class="how-card">
+          <div class="how-step-badge">STEP 03</div>
+          <h3 class="how-card-title">Render Genuine Handwriting</h3>
+          <p class="how-card-text">
+            Pretrained neural pen strokes and translucent highlights are rendered into a standardized 8.5×11″ US Letter portrait document, ready for study or print.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Data Privacy Section -->
+    <section class="data-section wrap" id="data-details" aria-labelledby="data-title">
+      <div class="data-card">
+        <h2 id="data-title" class="data-title">Privacy & Data Handling</h2>
+        <div class="data-columns">
+          <p>
+            <strong>Your document:</strong> Files are processed in transient temporary memory during your session. Uploaded PDFs, page extracts, and finished documents are not retained on our servers.
+          </p>
+          <p>
+            <strong>Your API key:</strong> Keys are used strictly for in-flight requests to Google’s Gemini API and are never stored in your browser’s local storage or persistent server databases.
+          </p>
+          <p>
+            <strong>The engine:</strong> Handwriting synthesis uses the open-source pretrained model from Handwriter. Scanned and long readings up to 100 pages are fully supported with automated retry handling.
+          </p>
+        </div>
+      </div>
+    </section>
   </main>
-  <footer class="site-footer wrap"><span>Auto Annotator <span class="footer-dot">·</span> Built by John Saleh</span><a href="https://github.com/lsj3l/auto-annotator" target="_blank" rel="noopener noreferrer">A small tool for closer reading. View source ↗</a></footer>
+
+  <!-- Site Footer -->
+  <footer class="site-footer wrap">
+    <div class="footer-left">
+      <span class="footer-logo">Auto Annotator</span>
+      <span class="footer-divider">·</span>
+      <span>Engineered by John Saleh</span>
+    </div>
+    <div class="footer-right">
+      <a href="https://github.com/lsj3l/auto-annotator" target="_blank" rel="noopener noreferrer">View Open Source Repository ↗</a>
+    </div>
+  </footer>
 </body>
 </html>
