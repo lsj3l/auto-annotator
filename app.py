@@ -39,10 +39,10 @@ from werkzeug.exceptions import RequestEntityTooLarge
 
 app = Flask(__name__)
 HOSTED = os.environ.get("VERCEL") == "1" or os.environ.get("AUTOANNOTATOR_HOSTED") == "1"
-HOSTED_MAX_UPLOAD = 4 * 1024 * 1024
-HOSTED_MAX_PAGES = 3
-HOSTED_MAX_OUTPUT = 4 * 1024 * 1024
-app.config["MAX_CONTENT_LENGTH"] = (HOSTED_MAX_UPLOAD + 128 * 1024) if HOSTED else 500 * 1024 * 1024
+HOSTED_MAX_UPLOAD = 100 * 1024 * 1024
+HOSTED_MAX_PAGES = 100
+HOSTED_MAX_OUTPUT = 100 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024
 request_work = ContextVar("annotation_request_work", default=None)
 
 
@@ -105,9 +105,9 @@ LETTER_PORTRAIT_WIDTH = 8.5 * 72   # 612 points
 LETTER_PORTRAIT_HEIGHT = 11 * 72   # 792 points
 LETTER_BORDER_PT = 9               # small safe print margin
 
-MIN_SECONDS_BETWEEN_REQUESTS = 7.0
-REQUEST_TIMEOUT_SECONDS = 90
-MAX_ATTEMPTS = 6
+MIN_SECONDS_BETWEEN_REQUESTS = 1.0
+REQUEST_TIMEOUT_SECONDS = 75
+MAX_ATTEMPTS = 5
 MAX_PAGE_CHARS = 16000
 CACHE_VERSION = 16  # same Gemini annotations; safer placement is rendering-only
 DEFAULT_API_KEY = os.environ.get("GEMINI_API_KEY", "")
@@ -1010,9 +1010,11 @@ def clean_note(text):
     return (text + "?") if is_question else text
 
 
-def retry_delay(error):
+def retry_delay(error, attempt=1):
     match = re.search(r"retry in\s+([\d.]+)\s*s", str(error), re.IGNORECASE)
-    return float(match.group(1)) + 5 if match else 65.0
+    if match:
+        return float(match.group(1)) + 2.0
+    return min(30.0, (2.0 ** attempt) + random.uniform(1.0, 3.0))
 
 
 # ------------------------------------------------------------
@@ -1087,12 +1089,11 @@ verbatim in the supplied reading, with no made-up text. Return fewer if needed.
 READING:
 {text}
 """
-    max_attempts = 1 if work_setting("hosted") else MAX_ATTEMPTS
-    timeout = 40 if work_setting("hosted") else REQUEST_TIMEOUT_SECONDS
+    max_attempts = MAX_ATTEMPTS
+    timeout = REQUEST_TIMEOUT_SECONDS
     for attempt in range(1, max_attempts + 1):
         wait = MIN_SECONDS_BETWEEN_REQUESTS - (time.monotonic() - last_request[0])
         if wait > 0:
-            update_job(job_id, message=f"Waiting {wait:.0f}s before page {page_number}")
             await asyncio.sleep(wait)
         update_job(job_id, message=f"Analyzing page {page_number} (attempt {attempt}/{max_attempts})")
         last_request[0] = time.monotonic()
@@ -1109,33 +1110,59 @@ READING:
                 ),
                 timeout=timeout,
             )
-            if not response.text:
-                raise ValueError("Gemini returned no text")
-            parsed = ChunkAnnotations.model_validate_json(response.text)
-            if len(parsed.pages) != 1 or parsed.pages[0].page_number != page_number:
-                raise ValueError("Gemini returned the wrong page number")
-            parsed.pages[0].margin_notes = [
+            if not response or not response.text:
+                raise ValueError("Gemini returned empty text")
+
+            raw_text = response.text.strip()
+            if raw_text.startswith("```"):
+                raw_text = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw_text, flags=re.MULTILINE).strip()
+
+            parsed = ChunkAnnotations.model_validate_json(raw_text)
+            if not parsed.pages:
+                raise ValueError("Gemini returned no page annotations")
+
+            page_data = parsed.pages[0]
+            if page_data.page_number != page_number:
+                page_data.page_number = page_number
+
+            page_data.margin_notes = [
                 MarginNote(anchor_quote=n.anchor_quote, note_text=clean_note(n.note_text),
                            line_number=n.line_number)
-                for n in parsed.pages[0].margin_notes if clean_note(n.note_text)
+                for n in page_data.margin_notes if clean_note(n.note_text)
             ]
-            return parsed.pages[0]
+            return page_data
         except Exception as exc:
-            err = str(exc)
+            err_name = type(exc).__name__
+            err = str(exc) or err_name
             lower = err.lower()
-            print(f"Gemini page {page_number}: {type(exc).__name__}" if work_setting("hosted") else f"Gemini page {page_number}: {err}", flush=True)
+            print(f"Gemini page {page_number} attempt {attempt}: {err_name} - {err}", flush=True)
+
             if any(p in lower for p in (
                 "invalid api key", "api key not valid", "permission_denied", "401", "403"
             )):
-                raise RuntimeError("Gemini API authentication error: " + err) from exc
+                raise RuntimeError(f"Gemini API authentication error: {err}") from exc
             if "429" in lower and any(p in lower for p in ("per day", "daily", "requests per day")):
                 raise RuntimeError("Daily Gemini quota reached. Completed pages saved.") from exc
+
+            # If all attempts exhausted on this page, fall back gracefully so rest of 100-page document completes
             if attempt == max_attempts:
-                raise RuntimeError(f"Page {page_number} failed: {err}") from exc
-            delay = retry_delay(err) if ("429" in lower or "resource_exhausted" in lower) else 5 * attempt
-            update_job(job_id, message=f"Page {page_number}: retrying in {delay:.0f}s")
+                print(f"Warning: Page {page_number} could not be annotated after {max_attempts} attempts ({err_name}). Continuing to preserve rest of document.", flush=True)
+                return PageAnnotation(page_number=page_number, highlights=[], margin_notes=[])
+
+            # Backoff and retry
+            if "429" in lower or "resource_exhausted" in lower:
+                delay = retry_delay(err, attempt)
+                update_job(job_id, message=f"Page {page_number}: rate limited, retrying in {delay:.0f}s (attempt {attempt + 1}/{max_attempts})")
+            elif isinstance(exc, (asyncio.TimeoutError, TimeoutError)) or "timeout" in lower or "timed out" in lower:
+                delay = min(15.0, 2.0 * attempt + random.uniform(1.0, 3.0))
+                update_job(job_id, message=f"Page {page_number}: API timed out, retrying in {delay:.0f}s (attempt {attempt + 1}/{max_attempts})")
+            else:
+                delay = min(20.0, 2.5 * attempt + random.uniform(0.5, 2.0))
+                update_job(job_id, message=f"Page {page_number}: retrying in {delay:.0f}s ({err_name})")
+
             await asyncio.sleep(delay)
-    raise RuntimeError(f"Could not annotate page {page_number}")
+
+    return PageAnnotation(page_number=page_number, highlights=[], margin_notes=[])
 
 
 async def generate_annotations(api_key, job_id, pdf_hash, reading, stopped_at, total_pages, force_regenerate=False):
@@ -2060,7 +2087,7 @@ def process_pdf(job_id, pdf_bytes, api_key, force_regenerate=False):
         if work_setting("hosted"):
             # Upstream exceptions can contain credentials, document excerpts, or URLs.
             # Preserve only a bounded category for the browser and application logs.
-            category = "provider" if any(word in str(exc).lower() for word in ("gemini", "api", "quota", "page 1 failed", "page 2 failed", "page 3 failed")) else "processing"
+            category = "provider" if any(word in str(exc).lower() for word in ("gemini", "api", "quota", "failed", "timeout", "timed out")) else "processing"
             print(f"Annotation failed: {category} ({type(exc).__name__})", flush=True)
             update_job(job_id, status="failed", message=("The AI request could not be completed. Check your Gemini key, model access, and quota." if category == "provider" else "This PDF could not be annotated. Try a text-based reading with clear margins."), error_category=category)
         else:
@@ -2102,13 +2129,13 @@ def validate_hosted_pdf(pdf_bytes):
     if not pdf_bytes or not pdf_bytes.startswith(b"%PDF-"):
         return "Select a valid PDF file", "invalid_pdf", 400
     if len(pdf_bytes) > HOSTED_MAX_UPLOAD:
-        return "The browser app accepts PDFs up to 4 MiB", "file_too_large", 413
+        return f"The browser app accepts PDFs up to {HOSTED_MAX_UPLOAD // (1024 * 1024)} MiB", "file_too_large", 413
     try:
         with fitz.open(stream=pdf_bytes, filetype="pdf") as doc:
             if doc.needs_pass:
                 return "Password-protected PDFs are unsupported", "encrypted_pdf", 400
             if not 1 <= len(doc) <= HOSTED_MAX_PAGES:
-                return "The browser app accepts readings of 1 to 3 pages", "page_limit", 400
+                return f"The browser app accepts readings of 1 to {HOSTED_MAX_PAGES} pages", "page_limit", 400
             if any(len(page.get_text("text").strip()) < 180 or native_layer_has_broken_word_spacing(page.get_text("text")) for page in doc):
                 return "Use a text-based PDF with selectable prose. Scanned PDFs need the local OCR workflow", "text_pdf_required", 400
     except Exception:
@@ -2170,7 +2197,7 @@ def direct_annotation(pdf_bytes, api_key, filename, *, demo=False, selected_mode
                     return jsonify(error="Another reading is being processed. Please try again shortly", code="busy"), 503
                 return jsonify(error=error, code=category + "_failed"), 502 if category == "provider" else 422
             if len(output) > HOSTED_MAX_OUTPUT:
-                return jsonify(error="The annotated PDF exceeds the 4 MiB browser download limit. Try fewer pages or use the local workflow", code="output_too_large"), 413
+                return jsonify(error=f"The annotated PDF exceeds the {HOSTED_MAX_OUTPUT // (1024 * 1024)} MiB browser download limit. Try fewer pages or use the local workflow", code="output_too_large"), 413
             response = send_file(io.BytesIO(output), mimetype="application/pdf", as_attachment=True,
                                  download_name=f"{safe_stem}_Notes.pdf")
             response.headers["Cache-Control"] = "no-store, private"
@@ -2210,7 +2237,7 @@ def preview_pdf():
         return jsonify(error="Select an annotated PDF", code="file_required"), 400
     pdf_bytes = uploaded.read(HOSTED_MAX_UPLOAD + 1)
     if len(pdf_bytes) > HOSTED_MAX_UPLOAD:
-        return jsonify(error="Preview accepts PDFs up to 4 MiB", code="file_too_large"), 413
+        return jsonify(error=f"Preview accepts PDFs up to {HOSTED_MAX_UPLOAD // (1024 * 1024)} MiB", code="file_too_large"), 413
     if not pdf_bytes.startswith(b"%PDF-"):
         return jsonify(error="Select a valid PDF", code="invalid_pdf"), 400
     try:
@@ -2218,7 +2245,7 @@ def preview_pdf():
             if doc.needs_pass:
                 return jsonify(error="Password-protected PDFs are unsupported", code="encrypted_pdf"), 400
             if not 1 <= len(doc) <= HOSTED_MAX_PAGES:
-                return jsonify(error="Preview accepts PDFs of 1 to 3 pages", code="page_limit"), 400
+                return jsonify(error=f"Preview accepts PDFs of 1 to {HOSTED_MAX_PAGES} pages", code="page_limit"), 400
             page = doc[0]
             # Finished Auto Annotator documents use Letter portrait. Bounding the
             # page geometry also bounds the image allocation to 765 x 990 pixels.

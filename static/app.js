@@ -43,7 +43,7 @@
 
   function updateMode() {
     const isLocal = localMode();
-    byId('limit-text').textContent = isLocal ? 'Local queue · larger PDFs · optional OCR' : `Text-based readings · up to ${config?.max_pages || 3} pages · ${formatSize(config?.max_upload_bytes || 4194304)}`;
+    byId('limit-text').textContent = isLocal ? 'Local queue · larger PDFs · optional OCR' : `Text-based readings · up to ${config?.max_pages || 100} pages · ${formatSize(config?.max_upload_bytes || 104857600)}`;
     byId('file-guidance').textContent = isLocal ? 'Scans require a local Tesseract installation.' : 'A selectable-text PDF works best.';
     byId('regenerate-option').hidden = !isLocal;
     byId('key-guidance').textContent = isLocal ? 'Leave blank only if GEMINI_API_KEY is configured locally. AI requests use your Google account’s quota and billing.' : 'Not saved in your browser. AI requests use your Google account’s quota and billing.';
@@ -76,7 +76,7 @@
 
   async function request(url, options = {}) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 300000);
+    const timer = setTimeout(() => controller.abort(), 1800000);
     try {
       const response = await fetch(url, {...options, signal: controller.signal, cache: 'no-store'});
       if (!response.ok) {

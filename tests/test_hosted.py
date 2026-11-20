@@ -34,8 +34,8 @@ class HostedContractTests(unittest.TestCase):
     def test_limits_are_exposed_without_credentials(self):
         response = self.client.get('/api/config')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json['max_pages'], 3)
-        self.assertEqual(response.json['max_upload_bytes'], 4 * 1024 * 1024)
+        self.assertEqual(response.json['max_pages'], 100)
+        self.assertEqual(response.json['max_upload_bytes'], 100 * 1024 * 1024)
         self.assertTrue(response.json['requires_api_key'])
         self.assertEqual(response.headers['Cache-Control'], 'no-store')
         self.assertNotIn('api_key', response.json)
@@ -62,7 +62,7 @@ class HostedContractTests(unittest.TestCase):
         self.assertEqual(response.json['code'], 'file_too_large')
 
     def test_page_and_scan_limits(self):
-        response = self.submit(text_pdf(4))
+        response = self.submit(text_pdf(101))
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json['code'], 'page_limit')
         doc = fitz.open()
@@ -156,6 +156,51 @@ class HostedContractTests(unittest.TestCase):
             response = self.client.post('/api/annotate')
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.json['code'], 'use_process_endpoint')
+
+    def test_annotate_page_retries_on_freeze_timeout_and_succeeds(self):
+        import asyncio
+        from unittest.mock import MagicMock
+        annotator.jobs['test_job_id'] = {}
+        fake_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.text = '{"pages": [{"page_number": 1, "highlights": [], "margin_notes": []}]}'
+
+        # First call times out (freeze simulation), second call succeeds
+        call_count = [0]
+        async def fake_generate_content(*args, **kwargs):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                raise asyncio.TimeoutError("Simulated API freeze timeout")
+            return mock_response
+
+        fake_client.models.generate_content = fake_generate_content
+
+        result = asyncio.run(annotator.annotate_page(
+            fake_client, 1, "Sample text for page", "test_job_id", [0.0]
+        ))
+        self.assertEqual(result.page_number, 1)
+        self.assertEqual(call_count[0], 2)
+
+    def test_annotate_page_graceful_fallback_if_all_retries_exhausted(self):
+        import asyncio
+        from unittest.mock import MagicMock
+        annotator.jobs['test_job_id'] = {}
+        fake_client = MagicMock()
+
+        # All calls time out or error
+        async def fake_generate_content(*args, **kwargs):
+            raise asyncio.TimeoutError("Persistent freeze")
+
+        fake_client.models.generate_content = fake_generate_content
+
+        with patch.object(annotator, 'MAX_ATTEMPTS', 2):
+            result = asyncio.run(annotator.annotate_page(
+                fake_client, 5, "Sample text for stubborn page", "test_job_id", [0.0]
+            ))
+        # Should gracefully return empty page annotations so whole 100-page book is not dropped
+        self.assertEqual(result.page_number, 5)
+        self.assertEqual(result.highlights, [])
+        self.assertEqual(result.margin_notes, [])
 
 
 if __name__ == '__main__':
